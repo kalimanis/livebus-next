@@ -1,8 +1,11 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
 
 type BusData = {
+  label: string;
+  from: string;
+  to: string;
   busNumber: string;
   direction: string;
   minutesLeft: number;
@@ -12,54 +15,85 @@ type BusData = {
 };
 
 export default function Home() {
-  const [busData, setBusData] = useState<BusData | null>(null);
-  const [countdown, setCountdown] = useState('');
+  const [busDataList, setBusDataList] = useState<BusData[]>([]);
+  const [countdowns, setCountdowns] = useState<string[]>([]);
 
+  // Fetch bus data from API
   useEffect(() => {
     const fetchBusData = async () => {
       const res = await fetch('/api/bus');
       const data = await res.json();
-      setBusData(data);
+      setBusDataList(data);
     };
 
     fetchBusData();
   }, []);
 
+  // Countdown for each connection
   useEffect(() => {
-    if (!busData) return;
-
-    const departureTime = new Date(busData.departureTime).getTime();
+    if (!busDataList.length) return;
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const timeLeft = departureTime - now;
 
-      const minutes = Math.floor(timeLeft / 60000);
-      const seconds = Math.floor((timeLeft % 60000) / 1000);
-      setCountdown(`${minutes} min ${seconds} sec`);
+      const updatedCountdowns = busDataList.map((bus) => {
+        const departureTime = new Date(bus.departureTime).getTime();
+        const timeLeft = departureTime - now;
+
+        if (timeLeft <= 0) return 'Departed';
+
+        const minutes = Math.floor(timeLeft / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+        return `${minutes} min ${seconds} sec`;
+      });
+
+      setCountdowns(updatedCountdowns);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [busData]);
+  }, [busDataList]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white shadow-lg rounded-2xl p-6 max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold text-blue-600 mb-4">Next Bus Info</h1>
-        {busData ? (
-          <>
-            <p><span className="font-semibold">Bus Number:</span> {busData.busNumber}</p>
-            <p><span className="font-semibold">Direction:</span> {busData.direction}</p>
-            <p>
-              <span className="font-semibold">Arrives in:</span>{' '}
-              <span className="text-green-600 font-bold">{countdown || `${busData.minutesLeft} min ${busData.secondsLeft} sec`}</span>
-            </p>
-            <p><span className="font-semibold">Exact Time:</span> {busData.formattedDepartureTime}</p>
-          </>
-        ) : (
-          <p className="text-gray-500">No buses available right now.</p>
-        )}
-      </div>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold text-blue-700 mb-8">Live Bus Info</h1>
+
+      {busDataList.length > 0 ? (
+        <div className="grid gap-6 w-full max-w-3xl">
+          {busDataList.map((bus, index) => (
+            <div
+              key={index}
+              className="bg-white p-6 rounded-2xl shadow-lg text-center border border-gray-200"
+            >
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">
+                {bus.label} Route
+              </h2>
+              <p className="text-sm text-gray-500 mb-3">
+                {bus.from} → {bus.to}
+              </p>
+              <p>
+                <span className="font-semibold">Bus Number:</span> {bus.busNumber}
+              </p>
+              <p>
+                <span className="font-semibold">Direction:</span> {bus.direction}
+              </p>
+              <p>
+                <span className="font-semibold">Arrives in:</span>{' '}
+                <span className="text-green-600 font-bold">
+                  {countdowns[index] ??
+                    `${bus.minutesLeft} min ${bus.secondsLeft} sec`}
+                </span>
+              </p>
+              <p>
+                <span className="font-semibold">Exact Time (Zurich):</span>{' '}
+                {bus.formattedDepartureTime}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-lg">Loading bus data...</p>
+      )}
     </main>
   );
 }
