@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 
+type Section = {
+    journey?: {
+        number: string;
+        to: string;
+    };
+};
+
 const fetchBusConnection = async (
     from: string,
     to: string,
@@ -22,9 +29,8 @@ const fetchBusConnection = async (
     const departureTimeStr = connection.from.departure;
     const departureTime = new Date(departureTimeStr);
 
-    const busSection = (connection.sections as any[]).find(
-        (section) => section.journey
-    );
+    const sections = connection.sections as Section[];
+    const busSection = sections.find((section) => section.journey);
 
     if (!busSection || !busSection.journey) return null;
 
