@@ -96,6 +96,9 @@ export default function Home() {
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+      <p className="text-xs text-center text-gray-400 mt-10">
+        Transit data powered by <a href="https://transport.opendata.ch/" target="_blank" className="underline">transport.opendata.ch</a>
+      </p>
     </main>
   );
 }
