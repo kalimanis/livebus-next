@@ -27,16 +27,20 @@ export async function GET() {
             const minutesLeft = Math.floor(timeDiff / 60);
             const secondsLeft = Math.floor(timeDiff % 60);
 
+            // ✅ Format in Zurich time zone
+            const formattedDepartureTime = new Intl.DateTimeFormat('de-CH', {
+                timeZone: 'Europe/Zurich',
+                hour: '2-digit',
+                minute: '2-digit',
+            }).format(departureTime);
+
             return NextResponse.json({
                 busNumber,
                 direction,
                 minutesLeft,
                 secondsLeft,
                 departureTime: departureTime.toISOString(),
-                formattedDepartureTime: departureTime.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
+                formattedDepartureTime,
             });
         }
 
